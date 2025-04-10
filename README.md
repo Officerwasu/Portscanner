@@ -26,3 +26,5 @@ Clone this repository:
 ```bash
 git clone https://github.com/yourusername/NetworkScannerCrazy.git
 cd NetworkScannerCrazy
+
+sudo python NetworkScannercrazy.py
