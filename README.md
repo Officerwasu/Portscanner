@@ -27,7 +27,7 @@ Linux and Macos
 ```bash
 git clone https://github.com/yourusername/NetworkScannerCrazy.git
 cd NetworkScannerCrazy
-
+cd 'Source Code'
 sudo python3 NetworkScannercrazy.py
 ```
 Windows
