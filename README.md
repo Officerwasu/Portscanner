@@ -23,8 +23,16 @@ A simple, threaded network scanner written in Python. This tool pings a range of
 
 Clone this repository:
 
+Linux and Macos
 ```bash
 git clone https://github.com/yourusername/NetworkScannerCrazy.git
 cd NetworkScannerCrazy
 
-sudo python NetworkScannercrazy.py
+sudo python3 NetworkScannercrazy.py
+```
+Windows
+Check here - 
+
+
+ 
+
