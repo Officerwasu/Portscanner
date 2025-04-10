@@ -31,7 +31,7 @@ cd 'Source Code'
 sudo python3 NetworkScannercrazy.py
 ```
 Windows
-Check here - 
+Check here - https://github.com/Officerwasu/Portscanner/releases
 
 
  
