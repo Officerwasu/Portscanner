@@ -2,7 +2,7 @@
 
 A simple, threaded network scanner written in Python. This tool pings a range of IP addresses within your local network to identify active hosts. It automatically detects your default gateway and constructs the network range to scan.
 
-## Features
+## Features 
 
 - Cross-platform support (Windows, macOS, Linux)
 - Threaded pinging for fast scanning
