@@ -1,16 +1,8 @@
-# NetworkScannerCrazy 
+# PortScanner
 
-A simple, threaded network scanner written in Python. This tool pings a range of IP addresses within your local network to identify active hosts. It automatically detects your default gateway and constructs the network range to scan.
+Python program that scans ports open on a device in network
 
-## Features 
 
-- Cross-platform support (Windows, macOS, Linux)
-- Threaded pinging for fast scanning
-- Automatically detects default gateway and /24 subnet
-- Clean CLI output with status logs
-- No third-party dependencies
-
----
 
 ##  Requirements
 
