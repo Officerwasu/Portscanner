@@ -13,6 +13,7 @@ chmod u+x portscanner.py
 sudo python3 portscanner.py
 ```
 Windows
+
 Check here - https://github.com/Officerwasu/Portscanner/releases
 
 
