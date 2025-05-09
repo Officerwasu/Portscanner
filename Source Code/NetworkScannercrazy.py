@@ -1,123 +1,74 @@
-import subprocess
-import ipaddress
+import socket
 import threading
-import queue
-import platform
+import time
+from queue import Queue
 
-def ping_host(host_ip, results_queue):
-    """Pings a single host and adds the result to the queue."""
+def scan_port(host, port, open_ports, timeout=3):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
     try:
-        system = platform.system().lower()
-        if system == 'windows':
-            cmd = ['ping', '-n', '1', '-w', '200', host_ip]
-        elif system in ['darwin', 'linux']:
-            cmd = ['ping', '-c', '1', '-W', '2', host_ip]
-        else:
-            print(f"[!] Unsupported OS: {system}")
-            return
+        result = sock.connect_ex((host, port))
+        if result == 0:
+            open_ports.append(port)
+    except socket.error:
+        pass
+    finally:
+        sock.close()
 
-        response = subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"Pinging {host_ip}... {'✔️ Active' if response == 0 else '❌ No response'}")
+def scan_ports(host, port_start, port_end, num_threads=20, timeout=3):
+    open_ports = []
+    port_queue = Queue()
+    for port in range(port_start, port_end + 1):
+        port_queue.put(port)
 
-        if response == 0:
-            results_queue.put(host_ip)
+    def worker():
+        while not port_queue.empty():
+            port = port_queue.get()
+            scan_port(host, port, open_ports, timeout)
+            port_queue.task_done()
 
-    except Exception as e:
-        print(f"[!] Error pinging {host_ip}: {e}")
-
-def scan_network_threaded(network_address, start_host, end_host, num_threads=256):
-    """Scans a network for active hosts using ping with threading."""
-    try:
-        network = ipaddress.ip_network(network_address, strict=False)
-    except ValueError:
-        print("[!] Invalid network address.")
-        return []
-
-    results_queue = queue.Queue()
     threads = []
-
-    print(f"Scanning {network_address} from host {start_host} to {end_host}")
-
-    for host_num in range(start_host, end_host + 1):
-        if host_num >= len(network):
-            break
-        host_ip = str(network[host_num])
-        thread = threading.Thread(target=ping_host, args=(host_ip, results_queue))
+    for _ in range(num_threads):
+        thread = threading.Thread(target=worker)
         threads.append(thread)
         thread.start()
 
-        if len(threads) >= num_threads:
-            for t in threads:
-                t.join()
-            threads = []
+    port_queue.join()
+    for thread in threads:
+        thread.join()
+    return open_ports
 
-    for t in threads:
-        t.join()
-
-    active_hosts = []
-    while not results_queue.empty():
-        active_hosts.append(results_queue.get())
-
-    return active_hosts
-
-def get_default_gateway():
-    """Retrieves the default gateway IP address."""
+def get_host_ip(host):
     try:
-        system = platform.system().lower()
-        if system == 'windows':
-            output = subprocess.check_output(['ipconfig'], text=True)
-            print("ipconfig output:\n", output)
-            for line in output.splitlines():
-                if 'Default Gateway' in line:
-                    parts = line.split(':')
-                    if len(parts) > 1:
-                        gateway = parts[-1].strip()
-                        if gateway:
-                            return gateway
-        elif system in ['darwin', 'linux']:
-            output = subprocess.check_output('ip route show default', shell=True, text=True)
-            print("Route output:\n", output)
-            for line in output.splitlines():
-                if 'default via' in line:
-                    parts = line.split()
-                    if 'via' in parts:
-                        gateway = parts[parts.index('via') + 1]
-                        return gateway
-        else:
-            print(f"[!] Unsupported OS: {system}")
-            return None
-    except Exception as e:
-        print(f"[!] Failed to get default gateway: {e}")
+        ip_address = socket.gethostbyname(host)
+        return ip_address
+    except socket.gaierror:
         return None
 
-def get_network_range(gateway_ip):
-    """Gets the /24 network range of the provided gateway IP."""
-    if gateway_ip:
-        try:
-            network = str(ipaddress.ip_network(gateway_ip + "/24", strict=False))
-            return network
-        except ValueError as e:
-            print(f"[!] Invalid gateway IP: {e}")
-            return None
-    return None
-
 if __name__ == "__main__":
-    gateway = get_default_gateway()
-    if gateway:
-        print(f"Default Gateway: {gateway}")
-        network_range = get_network_range(gateway)
-        if network_range:
-            print(f"Network Range: {network_range}")
-            start_host = 1
-            end_host = 254
-            active_hosts = scan_network_threaded(network_range, start_host, end_host)
-            if active_hosts:
-                print("\n✅ Active hosts found:")
-                for host in active_hosts:
-                    print(f" - {host}")
-            else:
-                print("❌ No active hosts found.")
-        else:
-            print("❌ Could not determine network range.")
+    target_host = input("Enter the target host (IP address or hostname): ")
+    target_ip = get_host_ip(target_host)
+    if target_ip is None:
+        print("Could not resolve hostname: " + target_host)
+        exit(1)
+    print("Target IP address: " + target_ip)
+
+    start_port = int(input("Enter the starting port number: "))
+    end_port = int(input("Enter the ending port number: "))
+
+    num_threads = int(input("Enter the number of threads (default: 20): ") or 20)
+    timeout = int(input("Enter the socket timeout in seconds (default: 3): ") or 3)
+
+    print("Scanning ports " + str(start_port) + " to " + str(end_port) + " on " + target_ip + " using " + str(num_threads) + " threads...")
+    start_time = time.time()
+    open_ports = scan_ports(target_ip, start_port, end_port, num_threads, timeout)
+    end_time = time.time()
+    total_time = end_time - start_time
+
+    if open_ports:
+        print("Open ports:")
+        for port in open_ports:
+            print("Port " + str(port) + " is open")
     else:
-        print("❌ Could not retrieve default gateway.")
+        print("No open ports found.")
+    print("Port scan completed in " + "{:.2f}".format(total_time) + " seconds.")
