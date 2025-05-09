@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+import sys
 from queue import Queue
 
 def scan_port(host, port, open_ports, timeout=3):
@@ -72,3 +73,6 @@ if __name__ == "__main__":
     else:
         print("No open ports found.")
     print("Port scan completed in " + "{:.2f}".format(total_time) + " seconds.")
+
+input("Enter any key to quit.")
+sys.exit()
