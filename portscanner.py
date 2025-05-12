@@ -72,6 +72,8 @@ if __name__ == "__main__":
             print("Port " + str(port) + " is open")
     else:
         print("No open ports found.")
+
+    
     print("Port scan completed in " + "{:.2f}".format(total_time) + " seconds.")
 
 input("Enter any key to quit.")
